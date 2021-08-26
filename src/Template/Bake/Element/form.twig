@@ -1,0 +1,101 @@
+{#
+/**
+ * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ *
+ * Licensed under The MIT License
+ * For full copyright and license information, please see the LICENSE.txt
+ * Redistributions of files must retain the above copyright notice.
+ *
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @link          http://cakephp.org CakePHP(tm) Project
+ * @since         2.0.0
+ * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ */
+#}
+{% set fields = Bake.filterFields(fields, schema, modelObject) %}
+
+  <!-- Main content -->
+  <section class="content {{ singularVar }} {{ action }} form">
+    <div class="row">
+      <!-- left column -->
+      <div class="col-md-12">
+        <!-- general form elements -->
+        <div class="box box-success">
+          <div class="box-header with-border">
+            <h3 class="box-title">
+            <?= __('{{ singularHumanName }}') ?>
+            {% if strpos(action, 'add') is same as(false) %}
+              <small><?= __('Edit {{ singularHumanName }}  ( ' . ${{ singularVar }}->{{ displayField }} .' ) ') ?></small>
+          {% else %}
+              <small><?= __('Add New {{ singularHumanName }}') ?></small>
+          {% endif %}</h3>
+          <div class="box-tools pull-right">
+              <?=$this->Html->link(
+                      '<i class="fa fa-arrow-circle-left"></i>',
+                      ['action' => 'index'],
+                      ['class' => 'btn btn-info btn-xs','title' => __('Back to {{ pluralHumanName }}'),'escape' => false]
+                  );?>
+  {% if strpos(action, 'add') is same as(false) %}
+                  <?= $this->Form->postLink(
+                      '<i class="fa fa-trash-o"></i>',
+                      ['action' => 'delete', ${{ singularVar }}->{{ primaryKey[0] }}],
+                      ['confirm' => __('Are you sure you want to delete this {{ singularHumanName }}?', ${{ singularVar }}->{{ primaryKey[0] }}),'class' => 'btn btn-danger btn-xs','title' => __('Delete'),'escape' => false]
+                  )?>
+  {% endif %}
+          </div>
+          </div>
+          <!-- /.box-header -->
+          <!-- form start -->
+          <?php
+              echo $this->Form->create(${{ singularVar }},['id' => '{{ singularVar }}-{{ action }}-frm']); ?>
+              <div class="box-body">
+              <?php
+  {% for field in fields if field not in primaryKey %}
+      {%- if keyFields[field] %}
+          {%- set fieldData = Bake.columnData(field, schema) %}
+          {%- if fieldData.null %}
+              echo $this->Form->control('{{ field }}', ['options' => ${{ keyFields[field] }}, 'empty' => true]);
+              {{- "\n" }}
+          {%- else %}
+              echo $this->Form->control('{{ field }}', ['options' => ${{ keyFields[field] }}]);
+              {{- "\n" }}
+          {%- endif %}
+      {%- elseif field not in ['created', 'modified', 'updated'] %}
+          {%- set fieldData = Bake.columnData(field, schema) %}
+          {%- if fieldData.type in ['date', 'datetime', 'time'] and fieldData.null %}
+              echo $this->Form->control('{{ field }}', ['empty' => true]);
+              {{- "\n" }}
+          {%- else %}
+              echo $this->Form->control('{{ field }}');
+      {{- "\n" }}
+          {%- endif %}
+      {%- endif %}
+  {%- endfor %}
+  {%- if associations.BelongsToMany %}
+      {%- for assocName, assocData in associations.BelongsToMany %}
+              echo $this->Form->control('{{ assocData.property }}._ids', ['options' => ${{ assocData.variable }}]);
+      {{- "\n" }}
+      {%- endfor %}
+    {% endif %} ?>
+    <div class="box-footer">
+      <?php 
+      echo $this->Form->button(__('Submit'),['class' => 'btn btn-primary']);
+      echo $this->Html->link(__('Cancel'),['action' => 'index'],['class' => 'btn btn-danger mx-1']); ?>
+    </div>
+      <?php echo $this->Form->end();?>
+    </div>
+      </div>
+    </div>
+  </section>
+<?php $this->append('bottom-script');?>
+<script>
+(function($){
+    $(document).ready(function(){
+        if(typeof $.validator !== "undefined"){
+            $("#{{ singularVar }}-{{ action }}-frm").validate();
+        }
+    });
+})($);
+</script>
+<?php $this->end(); ?>

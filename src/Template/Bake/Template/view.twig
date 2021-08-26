@@ -1,0 +1,164 @@
+{#
+/**
+ * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ *
+ * Licensed under The MIT License
+ * For full copyright and license information, please see the LICENSE.txt
+ * Redistributions of files must retain the above copyright notice.
+ *
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * @link          http://cakephp.org CakePHP(tm) Project
+ * @since         2.0.0
+ * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ */
+#}
+<?php
+/**
+ * @author \Nilesh Kushvaha
+ * @version \1.1
+ * @since \{{ game.gameDate|date("F j, Y, g:i a") }}
+ * @var \{{ namespace }}\View\AppView $this
+ * @var \{{ entityClass }} ${{ singularVar }}
+ */
+$this->assign('title',__('{{ singularHumanName }} ( ' . ${{ singularVar }}->{{ displayField }} . ' ) '));
+$this->Breadcrumbs->add(__('{{ pluralHumanName }}'),['action'=>'index']);
+$this->Breadcrumbs->add(__('{{ singularHumanName }} ( ' . ${{ singularVar }}->{{ displayField }} . ' ) '));
+?>
+{% set associations = {'BelongsTo': [], 'HasOne': [], 'HasMany': [], 'BelongsToMany': []}|merge(associations) %}
+{% set fieldsData = Bake.getViewFieldsData(fields, schema, associations) %}
+{% set associationFields = fieldsData.associationFields %}
+{% set groupedFields = fieldsData.groupedFields %}
+{% set pK = '$' ~ singularVar ~ '->' ~ primaryKey[0] %}
+
+  <!-- Main content -->
+  <section class="content {{ singularVar }} view">
+     <div class="row">
+        <div class="col-md-12">
+           <div class="box box-solid">
+              <div class="box-header with-border">
+                 <i class="fa fa-info"></i>
+                 <h3 class="box-title"><?= __('{{ singularHumanName }} ( ' . ${{ singularVar }}->{{ displayField }} . ' ) ') ?></h3>
+                 <div class="box-tools pull-right">
+                  <?=$this->Html->link(
+                    '<i class="glyphicon glyphicon-arrow-left"></i>',
+                    ['action' => 'index'],
+                    ['class' => 'btn btn-info btn-xs','title' => __('Back to {{ singularHumanName }}'),'escape' => false]
+                  );?>
+                  <?= $this->Html->link('<i class="glyphicon glyphicon-pencil"></i>', ['action' => 'edit', {{ pk|raw }}],['class' => 'btn btn-warning  btn-xs', 'title' => __('Edit'), 'escape' => false]) ?>
+
+                  <?= $this->Form->postLink(
+                    '<i class="fa fa-trash-o"></i>',
+                    ['action' => 'delete', {{ pK|raw }}],
+                    ['confirm' => __('Are you sure you want to delete this {{ singularHumanName }}?', {{ pK|raw }}),'class' => 'btn btn-danger btn-xs','title' => __('Delete'),'escape' => false]
+                )?>
+              </div>
+              </div>
+              <!-- /.box-header -->
+              <div class="box-body">
+                 <dl class="dl-horizontal">
+{% if groupedFields['string'] %}
+{% for field in groupedFields['string'] %}
+{% if associationFields[field] %}
+{% set details = associationFields[field] %}
+              <dt><?= __('{{ details.property|humanize }}') ?></dt>
+              <dd><?= ${{ singularVar }}->has('{{ details.property }}') ? $this->Html->link(${{ singularVar }}->{{ details.property }}->{{ details.displayField }}, ['controller' => '{{ details.controller }}', 'action' => 'view', ${{ singularVar }}->{{ details.property }}->{{ details.primaryKey[0] }}]) : '' ?></dd>
+{% else %}
+              <dt><?= __('{{ field|humanize }}') ?></dt>
+              <dd><?= h(${{ singularVar }}->{{ field }}) ?></dd>
+{% endif %}
+{% endfor %}
+{% endif %}
+{% if associations.HasOne %}
+{% for alias, details in associations.HasOne %}
+              <dt><?= __('{{ alias|underscore|singularize|humanize }}') ?></dt>
+              <dd><?= ${{ singularVar }}->has('{{ details.property }}') ? $this->Html->link(${{ singularVar }}->{{ details.property }}->{{ details.displayField }}, ['controller' => '{{ details.controller }}', 'action' => 'view', ${{ singularVar }}->{{ details.property }}->{{ details.primaryKey[0] }}]) : '' ?></dd>
+{% endfor %}
+{% endif %}
+{% if groupedFields.number %}
+{% for field in groupedFields.number %}
+              <dt><?= __('{{ field|humanize }}') ?></dt>
+              <dd><?= $this->Number->format(${{ singularVar }}->{{ field }}) ?></dd>
+{% endfor %}
+{% endif %}
+{% if groupedFields.date %}
+{% for field in groupedFields.date %}
+              <dt><?= __('{{ field|humanize }}') ?></dt>
+              <dd><?= h(${{ singularVar }}->{{ field }}) ?></dd>
+{% endfor %}
+{% endif %}
+{% if groupedFields.boolean %}
+{% for field in groupedFields.boolean %}
+              <dt><?= __('{{ field|humanize }}') ?></dt>
+              <dd><?= ${{ singularVar }}->{{ field }} ? __('Yes') : __('No'); ?></dd>
+{% endfor %}
+{% endif %}
+{% if groupedFields.text %}
+{% for field in groupedFields.text %}
+              <dt><?= __('{{ field|humanize }}') ?></dt>
+              <dd><?= $this->Text->autoParagraph(h(${{ singularVar }}->{{ field }})); ?></dd>
+{% endfor %}
+{% endif %}
+          </dl>
+              </div>
+              <!-- /.box-body -->
+           </div>
+           <!-- /.box -->
+        </div>
+        <!-- ./col -->
+     </div>
+     <!-- div -->
+  {% set relations = associations.BelongsToMany|merge(associations.HasMany) %}
+  {% for alias, details in relations %}
+  {% set otherSingularVar = alias|variable %}
+  {% set otherPluralHumanName = details.controller|underscore|humanize %}
+  <div class="related-{{ details.property }} view">
+      <div class="row">
+        <div class="col-xs-12">
+           <div class="box">
+              <div class="box-header">
+                 <i class="fa fa-share-alt"></i>
+                 <h3 class="box-title"><?= __('Related {{ otherPluralHumanName }}') ?></h3>
+              </div>
+              <!-- /.box-header -->
+              <div class="box-body table-responsive no-padding">
+                 <table class="table table-hover table-bordered">
+                    <thead>
+                       <tr>
+{% for field in details.fields %}
+                          <th scope="col"><?= __('{{ field|humanize }}') ?></th>
+{% endfor %}
+                          <th scope="col" class="actions"><?= __('Actions') ?></th>
+                       </tr>
+                   </thead>
+                       <tbody>
+                      <?php if (!empty(${{ singularVar }}->{{ details.property }})): ?>
+                          <?php foreach (${{ singularVar }}->{{ details.property }} as ${{ otherSingularVar }}): ?>
+                          <tr>
+{% for field in details.fields %}
+                              <td><?= h(${{ otherSingularVar }}->{{ field }}) ?></td>
+{% endfor %}
+{% set otherPk = '$' ~ otherSingularVar ~ '->' ~ details.primaryKey[0] %}
+                              <td class="actions">
+                                  <?= $this->Html->link('<i class="fa fa-eye"></i>', ['controller' => '{{ details.controller }}', 'action' => 'view', {{ otherPk|raw }}],['class' => 'btn btn-info btn-xs', 'title' => __('View'), 'escape' => false]) ?>
+                                  <?= $this->Html->link('<i class="fa fa-edit"></i>', ['controller' => '{{ details.controller }}', 'action' => 'edit', {{ otherPk|raw }}],['class' => 'btn btn-warning btn-xs', 'title' => __('Edit'), 'escape' => false]) ?>
+                                  <?= $this->Form->postLink('<i class="fa fa-trash-o"></i>', ['controller' => '{{ details.controller }}', 'action' => 'delete', {{ otherPk|raw }}], ['confirm' => __('Are you sure you want to delete this {{ otherPluralHumanName }}?', {{ otherPk|raw }}),'class' => 'btn btn-danger btn-xs', 'title' => __('Delete'), 'escape' => false]) ?>
+                              </td>
+                          </tr>
+                          <?php endforeach; ?>
+                      <?php else: ?>
+                          <tr>
+                              <td colspan="{{ details.fields|length + 1 }}"><?= __('Record not found!'); ?></td>
+                          </tr>
+                      <?php endif;?>
+                    </tbody>
+                 </table>
+              </div>
+              <!-- /.box-body -->
+           </div>
+           <!-- /.box -->
+        </div>
+     </div>
+ </div>
+ {% endfor %}
+</section>
